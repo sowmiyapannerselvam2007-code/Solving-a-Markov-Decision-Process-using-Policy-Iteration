@@ -124,26 +124,62 @@ If the improved policy is the same as the old policy, the policy is considered s
 
 ## Python Program
 
-```python
+# Policy evaluation
+```
+def policy_evaluation(env, policy, V, gamma, theta):
+    while True:
+        delta = 0
 
-# -------------------------------------------------
-# Policy Evaluation
-# -------------------------------------------------
+        for state in range(n_states):
+            old_value = V[state]
+            new_value = 0
+
+            for action in range(n_actions):
+                action_probability = policy[state][action]
+
+                for probability, next_state, reward, terminated in env.P[state][action]:
+                    new_value += action_probability * probability * (
+                        reward + gamma * V[next_state] * (not terminated)
+                    )
+
+            V[state] = new_value
+            delta = max(delta, abs(old_value - V[state]))
+
+        if delta < theta:
+            break
+
+    return V
 
 
+# Policy Evaluation Output
+initial_policy = np.ones((n_states, n_actions)) / n_actions
+V_evaluation = policy_evaluation(
+    env, initial_policy, np.zeros(n_states), gamma, theta
+)
 
-# -------------------------------------------------
-# Policy Improvement
-# -------------------------------------------------
-
-#-------------------------------------------------
-# Policy Iteration
-# -------------------------------------------------
-
-
-
+print("Policy Evaluation - Value Function:")
+print(np.round(V_evaluation.reshape(4, 4), 4))
 
 ```
+
+# Policy Improvement
+```
+def policy_improvement(env, V, gamma):
+    policy = np.zeros((n_states, n_actions))
+
+    for state in range(n_states):
+        action_values = np.zeros(n_actions)
+
+        for action in range(n_actions):
+            for probability, next_state, reward, terminated in env.P[state][action]:
+                action_values[action] += probability * (
+                    reward + gamma * V[next_state] * (not terminated)
+                )
+
+        best_action = np.argmax(action_values)
+        policy[state, best_action] = 1.0
+
+    return policy
 
 ## Output
 
@@ -157,7 +193,24 @@ Optimal State-Value Function:
 Optimal Policy:
 
 ```
+# Policy Iteration
+```
+def policy_iteration(env, gamma=0.99, theta=1e-8):
+    policy = np.ones((n_states, n_actions)) / n_actions
 
+    while True:
+        V = np.zeros(n_states)
+
+        V = policy_evaluation(env, policy, V, gamma, theta)
+
+        new_policy = policy_improvement(env, V, gamma)
+
+        if np.array_equal(policy, new_policy):
+            break
+
+        policy = new_policy
+
+    return policy, V
 
 
 ---
@@ -165,16 +218,15 @@ Optimal Policy:
 ## Result
 
 ```text
-
-
-
 ```
----
+
+## OUTPUT:
+<img width="456" height="162" alt="Screenshot 2026-10-29 100621" src="https://github.com/user-attachments/assets/27cd9d9c-402a-4fb9-af77-529a5ab1d693" />
+<img width="357" height="361" alt="Screenshot 2026-10-29 100628" src="https://github.com/user-attachments/assets/3f0b9368-2960-4fef-9cd4-12e3cc58349d" />
+
+## RESULT:
+Policy Evaluation and Policy Iteration algorithms were implemented successfully using the Gymnasium FrozenLake-v1 environment.
 
 ## Inference
-```text
-
-
-```
----
+The Policy Evaluation algorithm produced relatively low state values, whereas Policy Iteration produced higher values for most non-terminal states. This indicates that improving the policy helps the agent achieve a higher expected return. The optimal policy specifies the best action to take in each state to reach the goal while avoiding holes.
 
